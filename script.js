@@ -4,7 +4,7 @@
 // @match                   https://www.youtube.com/watch?v=*
 // @match                   http://www.youtube.com/watch?v=*
 // @version                 0.1.0
-// @author                  Oliwang, GSRHackZ, Arguel
+// @author                  Oliwang, GSRHackZ, enzoarguello512
 // @grant                   none
 // @license                 MIT
 // ==/UserScript==
@@ -69,7 +69,8 @@ document.head.appendChild(document.createElement("style")).innerHTML = styles;
 
 let displayed = false,
   body = document.body,
-  copied = false;
+  copied = false,
+  copiedText;
 
 let backup,
   isBackup = false;
@@ -94,16 +95,17 @@ const extractText = () => {
 };
 
 function copy() {
+  const { transcript, panel } = extractText();
+  navigator.clipboard.writeText(copiedText || transcript).then(
+    function () {
+      console.log("Async: Copying to clipboard was successful!");
+    },
+    function (err) {
+      console.error("Async: Could not copy text: ", err);
+    }
+  );
+  if (!copiedText) copiedText = transcript;
   if (copied == false) {
-    const { transcript, panel } = extractText();
-    navigator.clipboard.writeText(transcript).then(
-      function () {
-        console.log("Async: Copying to clipboard was successful!");
-      },
-      function (err) {
-        console.error("Async: Could not copy text: ", err);
-      }
-    );
     panel.innerHTML = transcript;
     panel.classList.remove("ytd-transcript-renderer");
     panel.classList.add("panel", "amazon-style");
@@ -118,7 +120,10 @@ setInterval(function () {
     )[3] !== undefined &&
     displayed == false
   ) {
-    const transcriptTitle = document.querySelectorAll("#title-container")[1];
+    let transcriptTitle = document.querySelectorAll("#title-container");
+    transcriptTitle.forEach((elem) => {
+      if (elem.innerText === "Transcript") transcriptTitle = elem;
+    });
 
     // Download transcript button
     const downloadBtn = document.createElement("button");
